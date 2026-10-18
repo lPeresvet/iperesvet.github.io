@@ -515,6 +515,7 @@
         let maxStreak = 0;
         let totalCorrect = 0;
         let totalRounds = 0;
+        let gameStartTime = 0;
         const TOTAL_ROUNDS = 10;
 
         // ── Round dots ──
@@ -819,10 +820,16 @@
         function endGame() {
             clearInterval(timerInterval);
 
+            const gameEndTime = Date.now();
+            const gameTimeMs = gameEndTime - gameStartTime;
+            const accuracy = totalRounds > 0 ? Math.round((totalCorrect / totalRounds) * 100) : 0;
+
             // Save score for results page
             localStorage.setItem('game2_score', score);
             localStorage.setItem('game2_correct', totalCorrect);
             localStorage.setItem('game2_maxstreak', maxStreak);
+            localStorage.setItem('game2_time_ms', gameTimeMs);
+            localStorage.setItem('game2_accuracy', accuracy);
 
             let icon = '🤔';
             let title = 'Раунд завершён!';
@@ -870,6 +877,7 @@
             maxStreak = 0;
             totalCorrect = 0;
             totalRounds = 0;
+            gameStartTime = Date.now();
             roundEl.textContent = 1;
             scoreEl.textContent = 0;
             comboEl.textContent = '';

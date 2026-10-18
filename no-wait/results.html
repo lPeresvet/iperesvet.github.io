@@ -557,6 +557,9 @@
     </div>
 
     <script>
+        // API endpoint
+        const API_URL = 'https://functions.yandexcloud.net/d4e8fibjk0vahft71hj1';
+
         const GAME_INFO = [
             {
                 id: 1,
@@ -715,6 +718,7 @@
             highScore: 0,
             cost: 0,
             totalScore: 0,
+            playCount: 0,
 
             // Character
             character: {
@@ -788,6 +792,9 @@
                     document.getElementById('jump-overlay').classList.remove('hidden');
                     return;
                 }
+
+                // Increment play count
+                this.playCount++;
 
                 // Deduct cost - store it separately
                 const jumpCosts = parseInt(localStorage.getItem('jump_total_costs')) || 0;
@@ -1070,13 +1077,76 @@
         const saveModal = document.getElementById('save-modal');
         const saveFinalScore = document.getElementById('save-final-score');
 
-        saveBtn.addEventListener('click', () => {
-            // Show final score in modal
-            saveFinalScore.textContent = finalTotalScore;
-            saveModal.classList.add('active');
+        saveBtn.addEventListener('click', async () => {
+            // Collect all data
+            const uid = localStorage.getItem('research_uid') || '';
+            const condition = localStorage.getItem('research_condition') || '';
 
-            // Store that results have been saved
-            localStorage.setItem('results_saved', 'true');
+            const game1Score = parseInt(localStorage.getItem('game1_score')) || 0;
+            const game1Correct = parseInt(localStorage.getItem('game1_correct')) || 0;
+            const game1MaxStreak = parseInt(localStorage.getItem('game1_maxstreak')) || 0;
+            const game1TimeMs = parseInt(localStorage.getItem('game1_time_ms')) || 0;
+            const game1Accuracy = parseInt(localStorage.getItem('game1_accuracy')) || 0;
+
+            const game2Score = parseInt(localStorage.getItem('game2_score')) || 0;
+            const game2Correct = parseInt(localStorage.getItem('game2_correct')) || 0;
+            const game2MaxStreak = parseInt(localStorage.getItem('game2_maxstreak')) || 0;
+            const game2TimeMs = parseInt(localStorage.getItem('game2_time_ms')) || 0;
+            const game2Accuracy = parseInt(localStorage.getItem('game2_accuracy')) || 0;
+
+            const game3Score = parseInt(localStorage.getItem('game3_score')) || 0;
+            const game3TimeMs = parseInt(localStorage.getItem('game3_time_ms')) || 0;
+
+            const jumpTotalCosts = parseInt(localStorage.getItem('jump_total_costs')) || 0;
+            const jumpPlayCount = JumpGame.playCount || 0;
+
+            const payload = {
+                uid: uid,
+                condition: condition,
+                game1_score: game1Score,
+                game1_correct: game1Correct,
+                game1_total_rounds: GAME_INFO[0].rounds,
+                game1_accuracy: game1Accuracy,
+                game1_maxstreak: game1MaxStreak,
+                game1_time_ms: game1TimeMs,
+                game2_score: game2Score,
+                game2_correct: game2Correct,
+                game2_total_rounds: GAME_INFO[1].rounds,
+                game2_accuracy: game2Accuracy,
+                game2_maxstreak: game2MaxStreak,
+                game2_time_ms: game2TimeMs,
+                game3_score: game3Score,
+                game3_correct: 0,
+                game3_total_rounds: GAME_INFO[2].rounds,
+                game3_accuracy: 0,
+                game3_time_ms: game3TimeMs,
+                jump_total_costs: jumpTotalCosts,
+                jump_play_count: jumpPlayCount,
+                total_score: finalTotalScore,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Show success modal
+                saveFinalScore.textContent = finalTotalScore;
+                saveModal.classList.add('active');
+
+                // Store that results have been saved
+                localStorage.setItem('results_saved', 'true');
+            } catch (error) {
+                console.error('Save failed:', error);
+                alert('Не удалось сохранить результат. Попробуйте ещё раз.');
+            }
         });
     </script>
 </body>
