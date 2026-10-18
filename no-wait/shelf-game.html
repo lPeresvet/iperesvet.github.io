@@ -353,6 +353,7 @@ let timeLeft = ROUND_TIME;
 let target = null;
 let availableItems = [];
 let isLocked = false;
+let gameStartTime = 0;
 
 const $ = id => document.getElementById(id);
 
@@ -532,8 +533,12 @@ function showScorePopup(parent, text, positive) {
 function endGame() {
   clearInterval(timer);
 
+  const gameEndTime = Date.now();
+  const gameTimeMs = gameEndTime - gameStartTime;
+
   // Save score for results page
   localStorage.setItem('game3_score', score);
+  localStorage.setItem('game3_time_ms', gameTimeMs);
   $('finalScore').textContent = score;
 
   let msg = '';
@@ -556,6 +561,7 @@ function resetGame() {
 $('startBtn').addEventListener('click', () => {
   $('startOverlay').classList.add('hidden');
   resetGame();
+  gameStartTime = Date.now();
   startRound();
 });
 

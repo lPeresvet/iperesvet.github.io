@@ -276,6 +276,27 @@
     </div>
 
     <script>
+        // Generate UUID if not exists
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Initialize session
+        (function() {
+            let uid = localStorage.getItem('research_uid');
+            if (!uid) {
+                uid = generateUUID();
+                localStorage.setItem('research_uid', uid);
+            }
+            // Save condition based on directory
+            const condition = window.location.pathname.includes('/no-wait/') ? 'no-wait' : 'wait';
+            localStorage.setItem('research_condition', condition);
+        })();
+
         const consentCheckbox = document.getElementById('consent-checkbox');
         const startBtn = document.getElementById('start-btn');
 
@@ -294,8 +315,20 @@
             if (consentCheckbox.checked) {
                 // Clear any previous scores
                 localStorage.removeItem('game1_score');
+                localStorage.removeItem('game1_correct');
+                localStorage.removeItem('game1_maxstreak');
+                localStorage.removeItem('game1_time_ms');
+                localStorage.removeItem('game1_accuracy');
                 localStorage.removeItem('game2_score');
+                localStorage.removeItem('game2_correct');
+                localStorage.removeItem('game2_maxstreak');
+                localStorage.removeItem('game2_time_ms');
+                localStorage.removeItem('game2_accuracy');
                 localStorage.removeItem('game3_score');
+                localStorage.removeItem('game3_time_ms');
+                localStorage.removeItem('jump_total_costs');
+                localStorage.removeItem('jump_highscore');
+                localStorage.removeItem('results_saved');
                 // Start with first game
                 window.location.href = 'game-categories.html';
             }
