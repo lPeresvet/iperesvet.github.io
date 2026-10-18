@@ -401,6 +401,118 @@
             margin-top: 10px;
         }
 
+        /* Save button */
+        .save-section {
+            margin-top: 20px;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #00b894, #55efc4);
+            color: #1a1a2e;
+            border: none;
+            padding: 16px 48px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .save-btn.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .save-btn.active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+        }
+
+        .save-btn.active:active {
+            transform: translateY(0);
+        }
+
+        /* Save modal */
+        .save-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .save-modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .save-modal {
+            background: linear-gradient(145deg, #1e1b4b, #312e81);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            max-width: 480px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .save-modal-overlay.active .save-modal {
+            transform: scale(1);
+        }
+
+        .save-modal-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .save-modal h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #55efc4;
+        }
+
+        .save-modal .final-score-display {
+            font-size: 3.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 20px 0;
+        }
+
+        .save-modal .thank-you-text {
+            font-size: 1.1rem;
+            color: #ddd;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .save-modal .organizer-note {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 20px 0;
+            font-size: 0.95rem;
+            color: #a5b4fc;
+            line-height: 1.5;
+        }
+
         @media (max-width: 500px) {
             h1 {
                 font-size: 1.7rem;
@@ -467,6 +579,27 @@
             </div>
             <div class="jump-instructions">Нажмите пробел, кликните или коснитесь экрана, чтобы прыгнуть</div>
         </div>
+
+        <div class="save-section">
+            <button class="save-btn" id="save-btn">💾 Сохранить результат</button>
+        </div>
+    </div>
+
+    <!-- Save result modal -->
+    <div class="save-modal-overlay" id="save-modal">
+        <div class="save-modal">
+            <div class="save-modal-icon">🎓</div>
+            <h2>Ваш результат сохранён!</h2>
+            <div class="final-score-display" id="save-final-score">0</div>
+            <p class="thank-you-text">
+                Огромное спасибо за ваше участие в исследовании! 🙏<br>
+                Ваши результаты помогут нам лучше понять когнитивные процессы.
+            </p>
+            <div class="organizer-note">
+                ⚠️ Организаторы поделятся результатами исследования позже.<br>
+                Следите за обновлениями!
+            </div>
+        </div>
     </div>
 
     <script>
@@ -509,11 +642,13 @@
 
         let finalTotalScore = 0;
         let timerInterval = null;
+        let resultsReady = false;
 
         function startTimer() {
             let seconds = 30;
             const timerSection = document.getElementById('timer-section');
             const timerCountdown = document.getElementById('timer-countdown');
+            const saveBtn = document.getElementById('save-btn');
 
             timerInterval = setInterval(() => {
                 seconds--;
@@ -523,6 +658,9 @@
                     clearInterval(timerInterval);
                     timerSection.classList.add('timer-hidden');
                     showGameResults();
+                    // Activate save button after timer ends
+                    resultsReady = true;
+                    saveBtn.classList.add('active');
                 }
             }, 1000);
         }
@@ -1003,6 +1141,25 @@
             JumpGame.totalScore = finalTotalScore;
             JumpGame.init();
         }, 200);
+
+        // ============ SAVE RESULT MODAL ============
+        const saveBtn = document.getElementById('save-btn');
+        const saveModal = document.getElementById('save-modal');
+        const saveFinalScore = document.getElementById('save-final-score');
+
+        // Save button is inactive during waiting period
+        saveBtn.classList.remove('active');
+
+        saveBtn.addEventListener('click', () => {
+            if (!resultsReady) return;
+
+            // Show final score in modal
+            saveFinalScore.textContent = finalTotalScore;
+            saveModal.classList.add('active');
+
+            // Store that results have been saved
+            localStorage.setItem('results_saved', 'true');
+        });
     </script>
 </body>
 </html>
