@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результаты исследования</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            padding: 20px;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .warning-message {
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            color: #fbbf24;
+            line-height: 1.5;
+        }
+
+        /* Total score */
+        .total-score-section {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .total-label {
+            font-size: 1rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .total-score {
+            font-size: 4rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .total-grade {
+            font-size: 1.2rem;
+            color: #fbbf24;
+            margin-bottom: 5px;
+        }
+
+        .total-detail {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        /* Game results */
+        .game-results {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .game-result-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s ease;
+        }
+
+        .game-result-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .game-result-icon {
+            font-size: 2rem;
+        }
+
+        .game-result-info {
+            flex: 1;
+        }
+
+        .game-result-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .game-result-order {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .game-result-score {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        .game-result-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .stat-value {
+            color: #ddd;
+            font-weight: 600;
+        }
+
+        /* Progress bar */
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        .progress-bar.high {
+            background: linear-gradient(90deg, #00b894, #55efc4);
+        }
+
+        .progress-bar.medium {
+            background: linear-gradient(90deg, #fdcb6e, #f39c12);
+        }
+
+        .progress-bar.low {
+            background: linear-gradient(90deg, #e17055, #d63031);
+        }
+
+        /* Restart button */
+        .restart-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 16px 48px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .restart-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Confetti animation */
+        @keyframes confetti-fall {
+            0% {
+                opacity: 1;
+                transform: translateY(-100vh) rotate(0deg);
+            }
+            100% {
+                opacity: 0.5;
+                transform: translateY(100vh) rotate(720deg);
+            }
+        }
+
+        .confetti {
+            position: fixed;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: confetti-fall 3s ease-in forwards;
+        }
+
+        /* Jump game */
+        .jump-game-section {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .jump-game-title {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: #55efc4;
+        }
+
+        .jump-game-subtitle {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 15px;
+        }
+
+        .jump-game-cost {
+            font-size: 1rem;
+            color: #fbbf24;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .jump-game-container {
+            position: relative;
+            width: 100%;
+            max-width: 550px;
+            margin: 0 auto 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+
+        #jump-canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            cursor: pointer;
+        }
+
+        .jump-game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7);
+            gap: 15px;
+        }
+
+        .jump-game-overlay.hidden {
+            display: none;
+        }
+
+        .overlay-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .overlay-score {
+            font-size: 1.2rem;
+            color: #fbbf24;
+        }
+
+        .overlay-highscore {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        .jump-play-btn {
+            background: linear-gradient(135deg, #00b894, #55efc4);
+            color: #1a1a2e;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+
+        .jump-play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+        }
+
+        .jump-play-btn:active {
+            transform: translateY(0);
+        }
+
+        .jump-play-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .jump-game-score-display {
+            font-size: 1rem;
+            color: #ddd;
+            margin-bottom: 10px;
+        }
+
+        .jump-game-score-display span {
+            color: #55efc4;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .jump-instructions {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 500px) {
+            h1 {
+                font-size: 1.7rem;
+            }
+
+            .total-score {
+                font-size: 3rem;
+            }
+
+            .game-result-score {
+                font-size: 1.5rem;
+            }
+
+            .jump-game-section {
+                padding: 20px;
+            }
+
+            .jump-game-title {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 Результаты исследования</h1>
+        <p class="subtitle">
+            Спасибо за участие! Вот ваши результаты по всем играм:
+        </p>
+
+        <div class="total-score-section">
+            <div class="total-label">Общий результат</div>
+            <div class="total-score" id="total-score">0</div>
+            <div class="total-grade" id="total-grade"></div>
+            <div class="total-detail" id="total-detail"></div>
+        </div>
+
+        <div class="game-results" id="game-results">
+            <!-- Game result cards will be inserted here -->
+        </div>
+
+        <div class="jump-game-section" id="jump-game-section">
+            <div class="warning-message">
+                ⚠️ Очки за запуск мини-игры будут вычитаться из общего результата
+            </div>
+            <div class="jump-game-title">🏃 Мини-игра: Прыжки через ящики</div>
+            <div class="jump-game-subtitle">Перепрыгивай через ящики как можно дольше!</div>
+            <div class="jump-game-cost" id="jump-cost">Стоимость: 0 очков</div>
+            <div class="jump-game-score-display" id="jump-score-display" style="display: none;">
+                Счёт: <span id="jump-current-score">0</span> | Лучший: <span id="jump-highscore">0</span>
+            </div>
+            <div class="jump-game-container">
+                <canvas id="jump-canvas" width="550" height="200"></canvas>
+                <div class="jump-game-overlay" id="jump-overlay">
+                    <div class="overlay-title" id="overlay-title">Прыжки через ящики</div>
+                    <div class="overlay-score" id="overlay-score"></div>
+                    <div class="overlay-highscore" id="overlay-highscore"></div>
+                    <button class="jump-play-btn" id="jump-play-btn">Играть</button>
+                </div>
+            </div>
+            <div class="jump-instructions">Нажмите пробел, кликните или коснитесь экрана, чтобы прыгнуть</div>
+        </div>
+    </div>
+
+    <script>
+        const GAME_INFO = [
+            {
+                id: 1,
+                name: 'Распредели продукты',
+                icon: '🛒',
+                maxScore: 300,
+                rounds: 5
+            },
+            {
+                id: 2,
+                name: 'Что лишнее?',
+                icon: '🤔',
+                maxScore: 400,
+                rounds: 10
+            },
+            {
+                id: 3,
+                name: 'Найди товар на полке',
+                icon: '📦',
+                maxScore: 350,
+                rounds: 5
+            }
+        ];
+
+        function getGrade(score) {
+            if (score >= 250) return { text: '🏆 Превосходно!', emoji: '🏆' };
+            if (score >= 150) return { text: '🎉 Отлично!', emoji: '🎉' };
+            if (score >= 80) return { text: '👍 Неплохо!', emoji: '👍' };
+            return { text: '💪 Есть куда расти!', emoji: '💪' };
+        }
+
+        function getProgressClass(percentage) {
+            if (percentage >= 70) return 'high';
+            if (percentage >= 40) return 'medium';
+            return 'low';
+        }
+
+        let finalTotalScore = 0;
+
+        function loadResults() {
+            const gameResults = document.getElementById('game-results');
+            const totalScoreEl = document.getElementById('total-score');
+            const totalGradeEl = document.getElementById('total-grade');
+            const totalDetailEl = document.getElementById('total-detail');
+
+            let totalScore = 0;
+            let totalCorrect = 0;
+            let totalRounds = 0;
+            let totalMaxStreak = 0;
+
+            GAME_INFO.forEach((game, index) => {
+                const score = parseInt(localStorage.getItem(`game${game.id}_score`)) || 0;
+                const correct = parseInt(localStorage.getItem(`game${game.id}_correct`)) || 0;
+                const maxStreak = parseInt(localStorage.getItem(`game${game.id}_maxstreak`)) || 0;
+
+                totalScore += score;
+                totalCorrect += correct;
+                totalRounds += game.rounds;
+                totalMaxStreak = Math.max(totalMaxStreak, maxStreak);
+
+                const percentage = Math.max(0, (score / game.maxScore) * 100);
+                const progressClass = getProgressClass(percentage);
+
+                const card = document.createElement('div');
+                card.className = 'game-result-card';
+                card.innerHTML = `
+                    <div class="game-result-header">
+                        <span class="game-result-icon">${game.icon}</span>
+                        <div class="game-result-info">
+                            <div class="game-result-name">${game.name}</div>
+                            <div class="game-result-order">Раунд ${index + 1} из 3 • ${game.rounds} раундов</div>
+                        </div>
+                        <div class="game-result-score">${score}</div>
+                    </div>
+                    <div class="game-result-stats">
+                        <div class="stat-item">
+                            Правильно: <span class="stat-value">${correct}/${game.rounds}</span>
+                        </div>
+                        <div class="stat-item">
+                            Макс. серия: <span class="stat-value">${maxStreak}</span>
+                        </div>
+                        <div class="stat-item">
+                            Результат: <span class="stat-value">${Math.round(percentage)}%</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar ${progressClass}" style="width: 0%;" data-width="${percentage}%"></div>
+                    </div>
+                `;
+                gameResults.appendChild(card);
+            });
+
+            // Calculate jump costs
+            const jumpCosts = parseInt(localStorage.getItem('jump_total_costs')) || 0;
+            totalScore = Math.max(0, totalScore - jumpCosts);
+
+            // Animate total score
+            let currentTotal = 0;
+            const totalInterval = setInterval(() => {
+                currentTotal += Math.ceil(totalScore / 30);
+                if (currentTotal >= totalScore) {
+                    currentTotal = totalScore;
+                    clearInterval(totalInterval);
+                }
+                totalScoreEl.textContent = currentTotal;
+            }, 50);
+
+            // Store final total for jump game
+            finalTotalScore = totalScore;
+
+            // Total grade
+            const grade = getGrade(totalScore);
+            totalGradeEl.textContent = grade.text;
+
+            const maxTotal = GAME_INFO.reduce((sum, g) => sum + g.maxScore, 0);
+            const totalPercentage = Math.round((totalScore / maxTotal) * 100);
+            totalDetailEl.textContent = `Правильных ответов: ${totalCorrect}/${totalRounds} • Макс. серия: ${totalMaxStreak} • ${totalPercentage}% от макс. результата`;
+
+            // Animate progress bars
+            setTimeout(() => {
+                document.querySelectorAll('.progress-bar').forEach(bar => {
+                    bar.style.width = bar.dataset.width;
+                });
+            }, 300);
+
+            // Confetti for great results
+            if (totalPercentage >= 70) {
+                createConfetti();
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#fbbf24', '#6366f1', '#00b894', '#fd79a8', '#55efc4', '#ff7675'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 60);
+            }
+        }
+
+        // ============ JUMP GAME ============
+        const JumpGame = {
+            canvas: null,
+            ctx: null,
+            running: false,
+            gameOver: false,
+            score: 0,
+            highScore: 0,
+            cost: 0,
+            totalScore: 0,
+
+            // Character
+            character: {
+                x: 80,
+                y: 0,
+                width: 30,
+                height: 50,
+                velocityY: 0,
+                isJumping: false,
+                jumpPower: -12,
+                gravity: 0.6,
+                groundY: 0
+            },
+
+            // Obstacles
+            obstacles: [],
+            obstacleSpeed: 4,
+            obstacleTimer: 0,
+            obstacleInterval: 120,
+
+            // Animation
+            animationId: null,
+            frameCount: 0,
+
+            init() {
+                this.canvas = document.getElementById('jump-canvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                this.cost = Math.max(10, Math.round(this.totalScore * 0.01));
+                if (this.cost === 0) this.cost = 10;
+
+                document.getElementById('jump-cost').textContent = `Стоимость: ${this.cost} очков`;
+
+                // Show/hide play button based on available points
+                const currentScore = this.totalScore;
+                if (currentScore < this.cost) {
+                    document.getElementById('jump-play-btn').style.display = 'none';
+                }
+
+                // Load high score
+                this.highScore = parseInt(localStorage.getItem('jump_highscore')) || 0;
+
+                // Setup ground
+                this.character.groundY = this.canvas.height - 35;
+                this.character.y = this.character.groundY;
+
+                // Draw initial state
+                this.drawIdle();
+
+                // Setup event listeners
+                document.getElementById('jump-play-btn').addEventListener('click', () => this.start());
+                this.canvas.addEventListener('click', () => this.jump());
+                this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); this.jump(); });
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space' && this.running) {
+                        e.preventDefault();
+                        this.jump();
+                    }
+                });
+            },
+
+            start() {
+                if (this.running) return;
+
+                // Check if user has enough points
+                const currentScore = parseInt(document.getElementById('total-score').textContent) || 0;
+                if (currentScore < this.cost) {
+                    document.getElementById('overlay-title').textContent = 'Недостаточно очков!';
+                    document.getElementById('overlay-score').textContent = `Нужно ещё ${this.cost - currentScore} очков`;
+                    document.getElementById('jump-play-btn').style.display = 'none';
+                    document.getElementById('jump-overlay').classList.remove('hidden');
+                    return;
+                }
+
+                // Deduct cost - store it separately
+                const jumpCosts = parseInt(localStorage.getItem('jump_total_costs')) || 0;
+                localStorage.setItem('jump_total_costs', jumpCosts + this.cost);
+
+                // Recalculate display total
+                let displayTotal = 0;
+                GAME_INFO.forEach(game => {
+                    displayTotal += parseInt(localStorage.getItem(`game${game.id}_score`)) || 0;
+                });
+                displayTotal -= (jumpCosts + this.cost);
+                displayTotal = Math.max(0, displayTotal);
+                document.getElementById('total-score').textContent = displayTotal;
+
+                // Reset game state
+                this.running = true;
+                this.gameOver = false;
+                this.score = 0;
+                this.obstacles = [];
+                this.obstacleTimer = 0;
+                this.frameCount = 0;
+                this.obstacleSpeed = 4;
+                this.character.y = this.character.groundY;
+                this.character.velocityY = 0;
+                this.character.isJumping = false;
+
+                // Hide overlay
+                document.getElementById('jump-overlay').classList.add('hidden');
+                document.getElementById('jump-score-display').style.display = 'block';
+                document.getElementById('jump-current-score').textContent = '0';
+                document.getElementById('jump-highscore').textContent = this.highScore;
+
+                // Start game loop
+                this.gameLoop();
+            },
+
+            jump() {
+                if (!this.running || this.gameOver) return;
+                if (!this.character.isJumping) {
+                    this.character.velocityY = this.character.jumpPower;
+                    this.character.isJumping = true;
+                }
+            },
+
+            spawnObstacle() {
+                const height = 25 + Math.random() * 20;
+                const width = 25 + Math.random() * 15;
+                this.obstacles.push({
+                    x: this.canvas.width,
+                    y: this.character.groundY - height,
+                    width: width,
+                    height: height,
+                    passed: false
+                });
+            },
+
+            update() {
+                this.frameCount++;
+
+                // Update character physics
+                this.character.velocityY += this.character.gravity;
+                this.character.y += this.character.velocityY;
+
+                if (this.character.y >= this.character.groundY) {
+                    this.character.y = this.character.groundY;
+                    this.character.velocityY = 0;
+                    this.character.isJumping = false;
+                }
+
+                // Spawn obstacles
+                this.obstacleTimer++;
+                if (this.obstacleTimer >= this.obstacleInterval) {
+                    this.spawnObstacle();
+                    this.obstacleTimer = 0;
+                    // Randomize next interval
+                    this.obstacleInterval = 60 + Math.random() * 60;
+                }
+
+                // Increase difficulty
+                if (this.frameCount % 500 === 0) {
+                    this.obstacleSpeed = Math.min(8, this.obstacleSpeed + 0.2);
+                }
+
+                // Update obstacles
+                for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                    const obs = this.obstacles[i];
+                    obs.x -= this.obstacleSpeed;
+
+                    // Score when obstacle is passed
+                    if (!obs.passed && obs.x + obs.width < this.character.x) {
+                        obs.passed = true;
+                        this.score++;
+                        document.getElementById('jump-current-score').textContent = this.score;
+                    }
+
+                    // Remove off-screen obstacles
+                    if (obs.x + obs.width < 0) {
+                        this.obstacles.splice(i, 1);
+                        continue;
+                    }
+
+                    // Collision detection
+                    if (this.checkCollision(obs)) {
+                        this.endGame();
+                        return;
+                    }
+                }
+            },
+
+            checkCollision(obstacle) {
+                const charLeft = this.character.x + 8;
+                const charRight = this.character.x + this.character.width - 8;
+                const charBottom = this.character.y;
+                const charTop = this.character.y - this.character.height + 12;
+
+                const obsLeft = obstacle.x + 3;
+                const obsRight = obstacle.x + obstacle.width - 3;
+                const obsTop = obstacle.y + 3;
+                const obsBottom = obstacle.y + obstacle.height - 3;
+
+                return charRight > obsLeft &&
+                       charLeft < obsRight &&
+                       charBottom > obsTop &&
+                       charTop < obsBottom;
+            },
+
+            draw() {
+                const ctx = this.ctx;
+
+                // Clear canvas
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw ground
+                ctx.strokeStyle = '#55efc4';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, this.character.groundY + 5);
+                ctx.lineTo(this.canvas.width, this.character.groundY + 5);
+                ctx.stroke();
+
+                // Draw character (stick figure)
+                this.drawCharacter();
+
+                // Draw obstacles (boxes)
+                this.obstacles.forEach(obs => {
+                    ctx.fillStyle = '#e17055';
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                    ctx.strokeStyle = '#d63031';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+
+                    // Draw box cross pattern
+                    ctx.strokeStyle = '#fdcb6e';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(obs.x, obs.y);
+                    ctx.lineTo(obs.x + obs.width, obs.y + obs.height);
+                    ctx.moveTo(obs.x + obs.width, obs.y);
+                    ctx.lineTo(obs.x, obs.y + obs.height);
+                    ctx.stroke();
+                });
+            },
+
+            drawCharacter() {
+                const ctx = this.ctx;
+                const cx = this.character.x + this.character.width / 2;
+                const headY = this.character.y - this.character.height + 8;
+                const bodyBottomY = this.character.y - 18;
+
+                ctx.strokeStyle = '#55efc4';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+
+                // Head
+                ctx.beginPath();
+                ctx.arc(cx, headY, 8, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Body
+                ctx.beginPath();
+                ctx.moveTo(cx, headY + 8);
+                ctx.lineTo(cx, bodyBottomY);
+                ctx.stroke();
+
+                // Legs (animate when running)
+                const legAngle = this.character.isJumping ? -0.3 : Math.sin(this.frameCount * 0.3) * 0.5;
+
+                // Left leg
+                ctx.beginPath();
+                ctx.moveTo(cx, bodyBottomY);
+                ctx.lineTo(cx + Math.cos(legAngle + 0.5) * 12, bodyBottomY + 18);
+                ctx.stroke();
+
+                // Right leg
+                ctx.beginPath();
+                ctx.moveTo(cx, bodyBottomY);
+                ctx.lineTo(cx + Math.cos(-legAngle - 0.5) * 12, bodyBottomY + 18);
+                ctx.stroke();
+
+                // Arms
+                const armAngle = this.character.isJumping ? -0.8 : Math.sin(this.frameCount * 0.3 + Math.PI) * 0.4;
+
+                // Left arm
+                ctx.beginPath();
+                ctx.moveTo(cx, headY + 14);
+                ctx.lineTo(cx + Math.cos(armAngle) * 12, headY + 14 + Math.sin(armAngle) * 12);
+                ctx.stroke();
+
+                // Right arm
+                ctx.beginPath();
+                ctx.moveTo(cx, headY + 14);
+                ctx.lineTo(cx + Math.cos(-armAngle) * 12, headY + 14 + Math.sin(-armAngle) * 12);
+                ctx.stroke();
+            },
+
+            drawIdle() {
+                const ctx = this.ctx;
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw ground
+                ctx.strokeStyle = '#55efc4';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, this.character.groundY + 5);
+                ctx.lineTo(this.canvas.width, this.character.groundY + 5);
+                ctx.stroke();
+
+                // Draw static character
+                this.character.y = this.character.groundY;
+                this.frameCount = 0;
+                this.drawCharacter();
+            },
+
+            endGame() {
+                this.running = false;
+                this.gameOver = true;
+
+                // Update high score
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    localStorage.setItem('jump_highscore', this.highScore);
+                }
+
+                // Show overlay
+                document.getElementById('overlay-title').textContent = 'Игра окончена!';
+                document.getElementById('overlay-score').textContent = `Ваш счёт: ${this.score}`;
+                document.getElementById('overlay-highscore').textContent = `Лучший результат: ${this.highScore}`;
+                document.getElementById('jump-play-btn').textContent = 'Играть снова';
+                document.getElementById('jump-play-btn').style.display = 'block';
+                document.getElementById('jump-overlay').classList.remove('hidden');
+
+                // Draw final frame
+                this.draw();
+            },
+
+            gameLoop() {
+                if (!this.running) return;
+
+                this.update();
+                if (!this.gameOver) {
+                    this.draw();
+                    this.animationId = requestAnimationFrame(() => this.gameLoop());
+                }
+            }
+        };
+
+        // Load results on page load
+        loadResults();
+
+        // Initialize jump game after results are loaded
+        setTimeout(() => {
+            JumpGame.totalScore = finalTotalScore;
+            JumpGame.init();
+        }, 200);
+    </script>
+</body>
+</html>

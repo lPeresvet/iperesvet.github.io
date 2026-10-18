@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Что лишнее?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+            user-select: none;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .subtitle {
+            color: #aaa;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .hud {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .hud-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px 24px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            min-width: 120px;
+        }
+
+        .hud-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #aaa;
+            margin-bottom: 4px;
+        }
+
+        .hud-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        #timer-value {
+            color: #4ade80;
+        }
+
+        #timer-value.warning {
+            color: #fbbf24;
+        }
+
+        #timer-value.danger {
+            color: #ef4444;
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        .question-display {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 20px 40px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 500px;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            max-width: 500px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .item-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 25px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            min-height: 120px;
+            position: relative;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px) scale(1.03);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .item-card:active {
+            transform: translateY(-2px) scale(0.98);
+        }
+
+        .item-card.correct {
+            background: linear-gradient(145deg, #065f46, #059669) !important;
+            border-color: #34d399 !important;
+            animation: correctPop 0.4s ease;
+        }
+
+        .item-card.wrong {
+            background: linear-gradient(145deg, #7f1d1d, #dc2626) !important;
+            border-color: #f87171 !important;
+            animation: wrongShake 0.4s ease;
+        }
+
+        .item-card.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .item-emoji {
+            font-size: 3rem;
+            margin-bottom: 8px;
+        }
+
+        .item-name {
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-align: center;
+            color: #fff;
+        }
+
+        .item-category-hint {
+            font-size: 0.7rem;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: linear-gradient(145deg, #1e1b4b, #312e81);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .modal h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .modal p {
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .score-final {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #fbbf24;
+            margin: 15px 0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 14px 36px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .score-popup {
+            position: fixed;
+            font-size: 1.5rem;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease forwards;
+            z-index: 50;
+        }
+
+        .score-popup.positive {
+            color: #4ade80;
+        }
+
+        .score-popup.negative {
+            color: #ef4444;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(1.3);
+            }
+        }
+
+        .combo {
+            font-size: 0.9rem;
+            color: #fbbf24;
+            margin-top: 5px;
+            min-height: 20px;
+        }
+
+        .rounds-info {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .round-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transition: background 0.3s;
+        }
+
+        .round-dot.completed { background: #00b894; }
+        .round-dot.failed { background: #d63031; }
+        .round-dot.current { background: #f7b733; box-shadow: 0 0 8px #f7b733; }
+
+        @keyframes correctPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @media (max-width: 500px) {
+            .items-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .item-card {
+                min-height: 100px;
+                padding: 20px 10px;
+            }
+
+            .item-emoji {
+                font-size: 2.5rem;
+            }
+
+            .item-name {
+                font-size: 0.8rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .hud {
+                gap: 10px;
+            }
+
+            .hud-item {
+                padding: 8px 16px;
+                min-width: 90px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🤔 Что лишнее?</h1>
+    <p class="subtitle">Один продукт не подходит к остальным. Найди его!</p>
+
+    <div class="hud">
+        <div class="hud-item">
+            <div class="hud-label">Очки</div>
+            <div class="hud-value" id="score-value">0</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">Время</div>
+            <div class="hud-value" id="timer-value">5.0</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">Раунд</div>
+            <div class="hud-value" id="round-value">1</div>
+        </div>
+    </div>
+
+    <div class="combo" id="combo"></div>
+
+    <div class="rounds-info" id="roundsInfo"></div>
+
+    <div class="question-display">
+        <div class="question-text" id="question-text">Нажми «Начать игру»</div>
+    </div>
+
+    <div class="items-grid" id="items-grid"></div>
+
+    <!-- Start / End overlay -->
+    <div class="overlay active" id="overlay">
+        <div class="modal">
+            <div class="modal-icon" id="modal-icon">🤔</div>
+            <h2 id="modal-title">Что лишнее?</h2>
+            <p id="modal-message">На экране появится 4 продукта. Один из них не подходит к остальным — найди его!</p>
+            <div class="score-final" id="modal-score" style="display:none;"></div>
+            <p id="modal-detail" style="font-size: 0.85rem; color: #888;"></p>
+            <button class="btn" id="modal-btn">Начать игру</button>
+        </div>
+    </div>
+
+    <script>
+        // ── Product catalog with categories ──
+        const CATEGORIES = {
+            fruits: {
+                name: 'Фрукты',
+                icon: '🍎',
+                items: [
+                    { emoji: '🍎', name: 'Яблоко' },
+                    { emoji: '🍌', name: 'Банан' },
+                    { emoji: '🍊', name: 'Апельсин' },
+                    { emoji: '🍋', name: 'Лимон' },
+                    { emoji: '🍇', name: 'Виноград' },
+                    { emoji: '🍓', name: 'Клубника' },
+                    { emoji: '🍑', name: 'Персик' },
+                    { emoji: '🍉', name: 'Арбуз' },
+                    { emoji: '🥝', name: 'Киви' },
+                    { emoji: '🍒', name: 'Вишня' },
+                    { emoji: '🥑', name: 'Авокадо' },
+                    { emoji: '🍐', name: 'Груша' },
+                ]
+            },
+            vegetables: {
+                name: 'Овощи',
+                icon: '🥕',
+                items: [
+                    { emoji: '🥕', name: 'Морковь' },
+                    { emoji: '🍅', name: 'Помидор' },
+                    { emoji: '🥒', name: 'Огурец' },
+                    { emoji: '🧅', name: 'Лук' },
+                    { emoji: '🥦', name: 'Брокколи' },
+                    { emoji: '🌽', name: 'Кукуруза' },
+                    { emoji: '🥔', name: 'Картофель' },
+                    { emoji: '🫑', name: 'Перец' },
+                    { emoji: '🧄', name: 'Чеснок' },
+                    { emoji: '🥬', name: 'Салат' },
+                    { emoji: '🍄', name: 'Гриб' },
+                    { emoji: '🫘', name: 'Фасоль' },
+                ]
+            },
+            dairy: {
+                name: 'Молочные',
+                icon: '🥛',
+                items: [
+                    { emoji: '🥛', name: 'Молоко' },
+                    { emoji: '🧀', name: 'Сыр' },
+                    { emoji: '🧈', name: 'Масло' },
+                    { emoji: '🥚', name: 'Яйца' },
+                    { emoji: '🫙', name: 'Сметана' },
+                    { emoji: '🍦', name: 'Мороженое' },
+                    { emoji: '🥣', name: 'Йогурт' },
+                    { emoji: '🧁', name: 'Творог' },
+                ]
+            },
+            meat: {
+                name: 'Мясные',
+                icon: '🥩',
+                items: [
+                    { emoji: '🥩', name: 'Говядина' },
+                    { emoji: '🍗', name: 'Курица' },
+                    { emoji: '🐟', name: 'Рыба' },
+                    { emoji: '🍖', name: 'Свинина' },
+                    { emoji: '🥓', name: 'Бекон' },
+                    { emoji: '🌭', name: 'Сосиски' },
+                    { emoji: '🍔', name: 'Фарш' },
+                    { emoji: '🦐', name: 'Креветки' },
+                    { emoji: '🦀', name: 'Краб' },
+                    { emoji: '🐙', name: 'Кальмар' },
+                    { emoji: '🍤', name: 'Тигровая креветка' },
+                ]
+            },
+            grocery: {
+                name: 'Бакалея',
+                icon: '📦',
+                items: [
+                    { emoji: '🍚', name: 'Рис' },
+                    { emoji: '🍝', name: 'Макароны' },
+                    { emoji: '🥫', name: 'Консервы' },
+                    { emoji: '🍞', name: 'Хлеб' },
+                    { emoji: '🍯', name: 'Мёд' },
+                    { emoji: '🧂', name: 'Соль' },
+                    { emoji: '🫒', name: 'Оливки' },
+                    { emoji: '🥜', name: 'Орехи' },
+                    { emoji: '🍫', name: 'Шоколад' },
+                    { emoji: '🍪', name: 'Печенье' },
+                    { emoji: '🍿', name: 'Попкорн' },
+                ]
+            },
+            drinks: {
+                name: 'Напитки',
+                icon: '🥤',
+                items: [
+                    { emoji: '🧃', name: 'Сок' },
+                    { emoji: '☕', name: 'Кофе' },
+                    { emoji: '🍵', name: 'Чай' },
+                    { emoji: '🥤', name: 'Кола' },
+                    { emoji: '💧', name: 'Вода' },
+                    { emoji: '🍺', name: 'Пиво' },
+                    { emoji: '🍷', name: 'Вино' },
+                    { emoji: '🧋', name: 'Бабл-ти' },
+                    { emoji: '🥥', name: 'Кокосовая вода' },
+                    { emoji: '🧉', name: 'Матча' },
+                ]
+            }
+        };
+
+        // ── Game state ──
+        let score = 0;
+        let round = 1;
+        let timeLeft = 8;
+        let timerInterval = null;
+        let roundStartTime = 0;
+        let gameActive = false;
+        let currentItems = [];
+        let oddOneOutIndex = -1;
+        let streak = 0;
+        let maxStreak = 0;
+        let totalCorrect = 0;
+        let totalRounds = 0;
+        const TOTAL_ROUNDS = 10;
+
+        // ── Round dots ──
+        function initRoundDots() {
+            const container = document.getElementById('roundsInfo');
+            container.innerHTML = '';
+            for (let i = 0; i < TOTAL_ROUNDS; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'round-dot';
+                if (i < round - 1) {
+                    // set by result
+                } else if (i === round - 1) {
+                    dot.classList.add('current');
+                }
+                container.appendChild(dot);
+            }
+        }
+
+        function updateRoundDots() {
+            const dots = document.querySelectorAll('.round-dot');
+            dots.forEach((dot, i) => {
+                dot.className = 'round-dot';
+                if (i < round - 1) {
+                    dot.classList.add(dot.dataset.result || 'completed');
+                } else if (i === round - 1) {
+                    dot.classList.add('current');
+                }
+            });
+        }
+
+        // ── DOM refs ──
+        const scoreEl = document.getElementById('score-value');
+        const timerEl = document.getElementById('timer-value');
+        const roundEl = document.getElementById('round-value');
+        const questionTextEl = document.getElementById('question-text');
+        const itemsGridEl = document.getElementById('items-grid');
+        const comboEl = document.getElementById('combo');
+        const overlayEl = document.getElementById('overlay');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalScore = document.getElementById('modal-score');
+        const modalDetail = document.getElementById('modal-detail');
+        const modalBtn = document.getElementById('modal-btn');
+
+        // ── Helpers ──
+        function shuffle(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function updateHUD() {
+            scoreEl.textContent = score;
+            timerEl.textContent = timeLeft.toFixed(1);
+
+            timerEl.classList.remove('warning', 'danger');
+            if (timeLeft <= 2) {
+                timerEl.classList.add('danger');
+            } else if (timeLeft <= 3) {
+                timerEl.classList.add('warning');
+            }
+        }
+
+        function showOverlay(icon, title, message, scoreText, detail, btnText) {
+            modalIcon.textContent = icon;
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalBtn.textContent = btnText;
+
+            if (scoreText) {
+                modalScore.style.display = 'block';
+                modalScore.textContent = scoreText;
+            } else {
+                modalScore.style.display = 'none';
+            }
+
+            modalDetail.textContent = detail;
+            overlayEl.classList.add('active');
+        }
+
+        function hideOverlay() {
+            overlayEl.classList.remove('active');
+        }
+
+        // ── Score popup ──
+        function showScorePopup(value, correct) {
+            const popup = document.createElement('div');
+            popup.className = `score-popup ${correct ? 'positive' : 'negative'}`;
+            popup.textContent = correct ? `+${value}` : `${value}`;
+            popup.style.left = '50%';
+            popup.style.top = '40%';
+            popup.style.transform = 'translateX(-50%)';
+            document.body.appendChild(popup);
+            setTimeout(() => popup.remove(), 1000);
+        }
+
+        // ── Combo display ──
+        function updateCombo() {
+            if (streak >= 2) {
+                comboEl.textContent = `🔥 Серия: ${streak} подряд!`;
+            } else {
+                comboEl.textContent = '';
+            }
+        }
+
+        // ── Generate round ──
+        function generateRound() {
+            const categoryKeys = Object.keys(CATEGORIES);
+
+            // Pick main category (4 items)
+            const mainCatKey = categoryKeys[Math.floor(Math.random() * categoryKeys.length)];
+            const mainCat = CATEGORIES[mainCatKey];
+            const mainItems = shuffle(mainCat.items).slice(0, 4);
+
+            // Pick distractor from different category
+            let distractorCatKey;
+            do {
+                distractorCatKey = categoryKeys[Math.floor(Math.random() * categoryKeys.length)];
+            } while (distractorCatKey === mainCatKey);
+
+            const distractorCat = CATEGORIES[distractorCatKey];
+            const distractor = distractorCat.items[Math.floor(Math.random() * distractorCat.items.length)];
+
+            // Combine and shuffle
+            const allItems = shuffle([...mainItems, distractor]);
+            oddOneOutIndex = allItems.findIndex(item => item.emoji === distractor.emoji);
+
+            currentItems = allItems;
+
+            // Update question
+            questionTextEl.textContent = `${mainCat.icon} ${mainCat.name} — кто лишний?`;
+        }
+
+        // ── Render items ──
+        function renderItems() {
+            itemsGridEl.innerHTML = '';
+            currentItems.forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.dataset.idx = idx;
+                card.innerHTML = `
+                    <div class="item-emoji">${item.emoji}</div>
+                    <div class="item-name">${item.name}</div>
+                `;
+                card.addEventListener('click', () => selectItem(idx, card));
+                itemsGridEl.appendChild(card);
+            });
+        }
+
+        // ── Start round ──
+        function startRound() {
+            if (round > TOTAL_ROUNDS) {
+                endGame();
+                return;
+            }
+
+            hideOverlay();
+            generateRound();
+            renderItems();
+            initRoundDots();
+
+            // Reset timer
+            timeLeft = 8;
+            roundStartTime = Date.now();
+            gameActive = true;
+            updateHUD();
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                if (timeLeft <= 0) {
+                    timeLeft = 0;
+                    updateHUD();
+                    endRound(false);
+                }
+                updateHUD();
+            }, 100);
+        }
+
+        // ── Select item ──
+        function selectItem(idx, card) {
+            if (!gameActive) return;
+
+            gameActive = false;
+            clearInterval(timerInterval);
+
+            const elapsed = (Date.now() - roundStartTime) / 1000;
+            const isCorrect = idx === oddOneOutIndex;
+
+            // Disable all cards
+            document.querySelectorAll('.item-card').forEach(c => c.classList.add('disabled'));
+
+            if (isCorrect) {
+                // Correct!
+                card.classList.add('correct');
+
+                // Calculate score
+                let roundScore = 30;
+                if (elapsed < 2) roundScore += 20; // speed bonus
+                else if (elapsed < 3.5) roundScore += 10;
+
+                // Streak bonus
+                streak++;
+                if (streak >= 3) roundScore += streak * 2;
+                if (streak > maxStreak) maxStreak = streak;
+                totalCorrect++;
+
+                score += roundScore;
+                showScorePopup(roundScore, true);
+                updateCombo();
+
+                // Mark round dot as completed
+                const dots = document.querySelectorAll('.round-dot');
+                if (dots[round - 1]) {
+                    dots[round - 1].dataset.result = 'completed';
+                }
+
+                updateHUD();
+
+                setTimeout(() => {
+                    round++;
+                    roundEl.textContent = round;
+                    updateRoundDots();
+                    startRound();
+                }, 800);
+
+            } else {
+                // Wrong
+                card.classList.add('wrong');
+
+                // Show correct answer
+                const correctCard = document.querySelector(`[data-idx="${oddOneOutIndex}"]`);
+                if (correctCard) correctCard.classList.add('correct');
+
+                streak = 0;
+                updateCombo();
+
+                // Mark round dot as failed
+                const dots = document.querySelectorAll('.round-dot');
+                if (dots[round - 1]) {
+                    dots[round - 1].dataset.result = 'failed';
+                }
+
+                score -= 15;
+                showScorePopup(-15, false);
+
+                updateHUD();
+
+                setTimeout(() => {
+                    round++;
+                    roundEl.textContent = round;
+                    updateRoundDots();
+                    startRound();
+                }, 1200);
+            }
+
+            totalRounds++;
+        }
+
+        // ── End round (timeout) ──
+        function endRound(won) {
+            gameActive = false;
+            clearInterval(timerInterval);
+
+            streak = 0;
+            updateCombo();
+            totalRounds++;
+
+            // Mark round dot as failed
+            const dots = document.querySelectorAll('.round-dot');
+            if (dots[round - 1]) {
+                dots[round - 1].dataset.result = 'failed';
+            }
+
+            // Show correct answer
+            const correctCard = document.querySelector(`[data-idx="${oddOneOutIndex}"]`);
+            if (correctCard) correctCard.classList.add('correct');
+
+            document.querySelectorAll('.item-card').forEach(c => c.classList.add('disabled'));
+
+            score -= 10;
+            showScorePopup(-10, false);
+            updateHUD();
+
+            setTimeout(() => {
+                round++;
+                updateRoundDots();
+                if (round > TOTAL_ROUNDS) {
+                    endGame();
+                } else {
+                    roundEl.textContent = round;
+                    startRound();
+                }
+            }, 1500);
+        }
+
+        // ── End game ──
+        function endGame() {
+            clearInterval(timerInterval);
+
+            // Save score for results page
+            localStorage.setItem('game2_score', score);
+            localStorage.setItem('game2_correct', totalCorrect);
+            localStorage.setItem('game2_maxstreak', maxStreak);
+
+            let icon = '🤔';
+            let title = 'Раунд завершён!';
+            let message = '';
+
+            if (score >= 250) {
+                icon = '🏆';
+                title = 'Превосходно!';
+                message = 'Ты мастер внимания!';
+            } else if (score >= 150) {
+                icon = '🎉';
+                title = 'Отлично!';
+                message = 'Хороший результат!';
+            } else if (score >= 80) {
+                icon = '👍';
+                title = 'Неплохо!';
+                message = 'Можно лучше!';
+            } else {
+                icon = '😅';
+                title = 'Результат';
+                message = 'Переходим к следующей игре...';
+            }
+
+            showOverlay(
+                icon,
+                title,
+                message,
+                `Очки: ${score}`,
+                `Правильных: ${totalCorrect}/${totalRounds} • Макс. серия: ${maxStreak}`,
+                'Далее →'
+            );
+            modalBtn.onclick = goToNextGame;
+        }
+
+        // ── Go to next game ──
+        function goToNextGame() {
+            window.location.href = 'shelf-game.html';
+        }
+
+        // ── Reset ──
+        function resetGame() {
+            score = 0;
+            round = 1;
+            streak = 0;
+            maxStreak = 0;
+            totalCorrect = 0;
+            totalRounds = 0;
+            roundEl.textContent = 1;
+            scoreEl.textContent = 0;
+            comboEl.textContent = '';
+            questionTextEl.textContent = 'Нажми «Начать игру»';
+            itemsGridEl.innerHTML = '';
+            document.getElementById('roundsInfo').innerHTML = '';
+            startRound();
+        }
+
+        // ── Init ──
+        modalBtn.textContent = 'Начать игру';
+        modalBtn.onclick = resetGame;
+
+        showOverlay(
+            '🤔',
+            'Что лишнее?',
+            'На экране появится 4 продукта. Один из них не подходит к остальным — найди его! (Часть 2 из 3)',
+            null,
+            '+30 за правильный выбор • +10-20 за скорость • +бонус за серию • −15 за ошибку • −10 за бездействие',
+            'Начать игру'
+        );
+        modalBtn.onclick = resetGame;
+    </script>
+</body>
+</html>

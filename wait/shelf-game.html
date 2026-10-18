@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Найди товар на полке!</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+  }
+
+  .container {
+    width: 90%;
+    max-width: 900px;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #f7b733, #fc4a1a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+  }
+
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 15px 0;
+    font-size: 1.1rem;
+  }
+
+  .stats-bar span {
+    background: rgba(255,255,255,0.1);
+    padding: 8px 20px;
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+  }
+
+  .timer-bar-container {
+    width: 100%;
+    height: 12px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    margin: 15px 0;
+    overflow: hidden;
+  }
+
+  .timer-bar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #00b894, #55efc4);
+    border-radius: 6px;
+    transition: width 0.1s linear, background 0.3s;
+  }
+
+  .timer-bar.warning { background: linear-gradient(90deg, #fdcb6e, #f39c12); }
+  .timer-bar.danger { background: linear-gradient(90deg, #e17055, #d63031); }
+
+  .round-info {
+    font-size: 1.3rem;
+    margin: 15px 0;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .round-info .target-label {
+    font-size: 0.95rem;
+    opacity: 0.7;
+  }
+
+  .round-info .target-item {
+    font-size: 1.6rem;
+    font-weight: bold;
+  }
+
+  .shelf {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    padding: 20px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    margin: 10px 0 20px;
+  }
+
+  .shelf-item {
+    aspect-ratio: 1;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8rem;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
+    border: 2px solid transparent;
+    user-select: none;
+    position: relative;
+  }
+
+  .shelf-item:hover {
+    transform: scale(1.08);
+    background: rgba(255,255,255,0.18);
+    box-shadow: 0 0 20px rgba(255,255,255,0.15);
+  }
+
+  .shelf-item:active {
+    transform: scale(0.95);
+  }
+
+  .shelf-item .item-name {
+    font-size: 0.7rem;
+    margin-top: 4px;
+    opacity: 0.6;
+    letter-spacing: 0.5px;
+  }
+
+  .shelf-item.correct {
+    border-color: #00b894;
+    background: rgba(0, 184, 148, 0.3);
+    animation: correctPulse 0.5s ease;
+    box-shadow: 0 0 25px rgba(0, 184, 148, 0.5);
+  }
+
+  .shelf-item.wrong {
+    border-color: #d63031;
+    background: rgba(214, 48, 49, 0.3);
+    animation: shake 0.4s ease;
+    box-shadow: 0 0 25px rgba(214, 48, 49, 0.5);
+  }
+
+  @keyframes correctPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .overlay.hidden { display: none; }
+
+  .overlay-content {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    padding: 40px 50px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+  }
+
+  .overlay-content h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    background: linear-gradient(90deg, #f7b733, #fc4a1a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .overlay-content p {
+    font-size: 1.1rem;
+    margin: 8px 0;
+    opacity: 0.85;
+    line-height: 1.6;
+  }
+
+  .overlay-content .final-score {
+    font-size: 3rem;
+    font-weight: bold;
+    background: linear-gradient(90deg, #00b894, #55efc4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 15px 0;
+  }
+
+  .btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 14px 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    background: linear-gradient(90deg, #f7b733, #fc4a1a);
+    color: #fff;
+    transition: transform 0.15s, box-shadow 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(252, 74, 26, 0.4);
+  }
+
+  .btn:active { transform: translateY(0); }
+
+  .score-popup {
+    position: absolute;
+    font-size: 1.2rem;
+    font-weight: bold;
+    pointer-events: none;
+    animation: floatUp 0.8s ease forwards;
+    z-index: 50;
+  }
+
+  .score-popup.positive { color: #55efc4; }
+  .score-popup.negative { color: #ff7675; }
+
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-60px); }
+  }
+
+  .rounds-info {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 10px 0;
+  }
+
+  .round-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: background 0.3s;
+  }
+
+  .round-dot.completed { background: #00b894; }
+  .round-dot.failed { background: #d63031; }
+  .round-dot.current { background: #f7b733; box-shadow: 0 0 8px #f7b733; }
+
+  @media (max-width: 600px) {
+    .shelf { grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; }
+    .shelf-item { font-size: 2rem; }
+    h1 { font-size: 1.6rem; }
+    .overlay-content { padding: 25px 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🛒 Найди товар на полке!</h1>
+
+  <div class="stats-bar">
+    <span>⭐ Очки: <strong id="score">0</strong></span>
+    <span>📦 Раунд: <strong id="roundNum">1</strong> / <strong id="totalRounds">5</strong></span>
+  </div>
+
+  <div class="rounds-info" id="roundsInfo"></div>
+
+  <div class="timer-bar-container">
+    <div class="timer-bar" id="timerBar"></div>
+  </div>
+
+  <div class="round-info">
+    <span class="target-label">Найди на полке:</span>
+    <span class="target-item" id="targetItem">—</span>
+  </div>
+
+  <div class="shelf" id="shelf"></div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay" id="startOverlay">
+  <div class="overlay-content">
+    <h2>🛒 Найди товар на полке!</h2>
+    <p>Тебе покажут товар, который нужно найти среди других.</p>
+    <p>⏱ У тебя 15 секунд на каждый раунд</p>
+    <p>✅ Правильный выбор: <strong>+50</strong> очков</p>
+    <p>⚡ Быстро (&lt;10 сек): бонус <strong>+20</strong></p>
+    <p>❌ Ошибка: <strong>−10</strong> очков</p>
+    <p>Всего <strong>5 раундов</strong>. Готов?</p>
+    <button class="btn" id="startBtn">Начать игру</button>
+  </div>
+</div>
+
+<!-- End overlay -->
+<div class="overlay hidden" id="endOverlay">
+  <div class="overlay-content">
+    <h2>Последняя игра завершена!</h2>
+    <p>Твой результат:</p>
+    <div class="final-score" id="finalScore">0</div>
+    <p id="endMessage"></p>
+    <button class="btn" id="restartBtn">Смотреть результаты →</button>
+  </div>
+</div>
+
+<script>
+const ITEMS = [
+  { emoji: '🥛', name: 'Молоко' },
+  { emoji: '🍞', name: 'Хлеб' },
+  { emoji: '🧀', name: 'Сыр' },
+  { emoji: '🍎', name: 'Яблоко' },
+  { emoji: '🍌', name: 'Банан' },
+  { emoji: '🥚', name: 'Яйца' },
+  { emoji: '🧈', name: 'Масло' },
+  { emoji: '🍅', name: 'Томаты' },
+  { emoji: '🥕', name: 'Морковь' },
+  { emoji: '🍗', name: 'Курица' },
+  { emoji: '🐟', name: 'Рыба' },
+  { emoji: '🍚', name: 'Рис' },
+  { emoji: '🍝', name: 'Паста' },
+  { emoji: '🥫', name: 'Консервы' },
+  { emoji: '☕', name: 'Кофе' },
+  { emoji: '🍵', name: 'Чай' },
+  { emoji: '🍪', name: 'Печенье' },
+  { emoji: '🍫', name: 'Шоколад' },
+  { emoji: '🧃', name: 'Сок' },
+  { emoji: '💧', name: 'Вода' },
+];
+
+const TOTAL_ROUNDS = 5;
+const ROUND_TIME = 15;
+
+let score = 0;
+let currentRound = 0;
+let timer = null;
+let timeLeft = ROUND_TIME;
+let target = null;
+let availableItems = [];
+let isLocked = false;
+
+const $ = id => document.getElementById(id);
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function initRoundDots() {
+  const container = $('roundsInfo');
+  container.innerHTML = '';
+  for (let i = 0; i < TOTAL_ROUNDS; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'round-dot';
+    if (i < currentRound) {
+      // set by result
+    } else if (i === currentRound) {
+      dot.classList.add('current');
+    }
+    container.appendChild(dot);
+  }
+}
+
+function updateRoundDots() {
+  const dots = document.querySelectorAll('.round-dot');
+  dots.forEach((dot, i) => {
+    dot.className = 'round-dot';
+    if (i < currentRound) {
+      dot.classList.add(dots[i].dataset.result || 'completed');
+    } else if (i === currentRound) {
+      dot.classList.add('current');
+    }
+  });
+}
+
+function startRound() {
+  if (currentRound >= TOTAL_ROUNDS) {
+    endGame();
+    return;
+  }
+
+  isLocked = false;
+  timeLeft = ROUND_TIME;
+
+  // Pick target
+  target = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+
+  // Pick 9 distractors (different from target)
+  const others = ITEMS.filter(it => it.emoji !== target.emoji);
+  const distractors = shuffle(others).slice(0, 9);
+
+  // Combine and shuffle
+  availableItems = shuffle([target, ...distractors]);
+
+  // Update UI
+  $('roundNum').textContent = currentRound + 1;
+  $('targetItem').textContent = `${target.emoji} ${target.name}`;
+  initRoundDots();
+
+  // Build shelf
+  const shelf = $('shelf');
+  shelf.innerHTML = '';
+  availableItems.forEach((item, idx) => {
+    const el = document.createElement('div');
+    el.className = 'shelf-item';
+    el.innerHTML = `${item.emoji}<span class="item-name">${item.name}</span>`;
+    el.dataset.idx = idx;
+    el.addEventListener('click', () => handleClick(el, item, idx));
+    shelf.appendChild(el);
+  });
+
+  // Start timer
+  updateTimerBar();
+  clearInterval(timer);
+  timer = setInterval(() => {
+    timeLeft -= 0.1;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      clearInterval(timer);
+      handleTimeout();
+    }
+    updateTimerBar();
+  }, 100);
+}
+
+function updateTimerBar() {
+  const bar = $('timerBar');
+  const pct = (timeLeft / ROUND_TIME) * 100;
+  bar.style.width = pct + '%';
+  bar.className = 'timer-bar';
+  if (pct < 30) bar.classList.add('danger');
+  else if (pct < 60) bar.classList.add('warning');
+}
+
+function handleClick(el, item, idx) {
+  if (isLocked) return;
+
+  if (item.emoji === target.emoji) {
+    // Correct!
+    isLocked = true;
+    clearInterval(timer);
+    el.classList.add('correct');
+
+    let roundScore = 50;
+    let bonusText = '';
+
+    if (timeLeft > 10) {
+      roundScore += 20;
+      bonusText = ' +20 быстро!';
+    }
+
+    score += roundScore;
+    $('score').textContent = score;
+
+    showScorePopup(el, `+${roundScore}${bonusText}`, true);
+
+    // Mark round dot
+    const dots = document.querySelectorAll('.round-dot');
+    if (dots[currentRound]) {
+      dots[currentRound].dataset.result = 'completed';
+    }
+
+    setTimeout(() => {
+      currentRound++;
+      updateRoundDots();
+      startRound();
+    }, 900);
+
+  } else {
+    // Wrong
+    el.classList.add('wrong');
+    score -= 10;
+    $('score').textContent = score;
+    showScorePopup(el, '-10', false);
+
+    setTimeout(() => el.classList.remove('wrong'), 400);
+  }
+}
+
+function handleTimeout() {
+  isLocked = true;
+
+  // Highlight correct item
+  const items = document.querySelectorAll('.shelf-item');
+  items.forEach(el => {
+    const idx = parseInt(el.dataset.idx);
+    if (availableItems[idx].emoji === target.emoji) {
+      el.classList.add('correct');
+    }
+  });
+
+  const dots = document.querySelectorAll('.round-dot');
+  if (dots[currentRound]) {
+    dots[currentRound].dataset.result = 'failed';
+  }
+
+  setTimeout(() => {
+    currentRound++;
+    updateRoundDots();
+    startRound();
+  }, 1500);
+}
+
+function showScorePopup(parent, text, positive) {
+  const popup = document.createElement('div');
+  popup.className = `score-popup ${positive ? 'positive' : 'negative'}`;
+  popup.textContent = text;
+  parent.style.position = 'relative';
+  parent.appendChild(popup);
+  setTimeout(() => popup.remove(), 800);
+}
+
+function endGame() {
+  clearInterval(timer);
+
+  // Save score for results page
+  localStorage.setItem('game3_score', score);
+  $('finalScore').textContent = score;
+
+  let msg = '';
+  if (score >= 300) msg = '🏆 Превосходно! Ты настоящий мастер шоппинга!';
+  else if (score >= 200) msg = '🎉 Отлично! Хороший результат!';
+  else if (score >= 100) msg = '👍 Неплохо! Можно лучше!';
+  else msg = '😅 Попробуй ещё раз — практика ведёт к совершенству!';
+
+  $('endMessage').textContent = msg;
+  $('endOverlay').classList.remove('hidden');
+}
+
+function resetGame() {
+  score = 0;
+  currentRound = 0;
+  $('score').textContent = 0;
+  $('totalRounds').textContent = TOTAL_ROUNDS;
+}
+
+$('startBtn').addEventListener('click', () => {
+  $('startOverlay').classList.add('hidden');
+  resetGame();
+  startRound();
+});
+
+$('restartBtn').addEventListener('click', () => {
+  window.location.href = 'results.html';
+});
+</script>
+
+</body>
+</html>
